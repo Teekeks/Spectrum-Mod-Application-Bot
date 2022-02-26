@@ -96,13 +96,15 @@ async def on_message(msg: Message):
 
 @client.interaction_handler('btn_modal1')
 async def send_modal_stage_1(inter: Interaction):
+    c = cache[inter.user.id]
     modal = Modal('stage_2_trigger',
                   'About you',
                   [ActionRow([
-                      TextInput('age', 'What is your age?', max_length=3)
+                      TextInput('age', 'What is your age?', max_length=3, value=c.get('age'))
                   ]), ActionRow([
                       TextInput('timezone', 'What is your timezone?',
-                                placeholder='examples: UTC+2 or EST', max_length=30)
+                                placeholder='examples: UTC+2 or EST', max_length=30,
+                                value=c.get('timezone'))
                   ])])
     await inter.send_modal(modal)
 
@@ -127,18 +129,21 @@ async def stage_2(inter: Interaction):
 
 @client.interaction_handler('btn_modal2')
 async def send_modal_stage_2(inter: Interaction):
+    c = cache[inter.user.id]
     modal = Modal('stage_3_trigger',
                   'Relationship to Spectrum',
                   [ActionRow([
                       TextInput('thoughts',
                                 'Thoughts on Spectrum?',
                                 placeholder='What are your thoughts on Spectrum as a server?',
-                                style=TextInputType.PARAGRAPH)
+                                style=TextInputType.PARAGRAPH,
+                                value=c.get('thoughts'))
                   ]), ActionRow([
                       TextInput('change',
                                 'What would you change about the server?',
                                 placeholder='If you could change one thing about Spectrum, what would it be?',
-                                style=TextInputType.PARAGRAPH)
+                                style=TextInputType.PARAGRAPH,
+                                value=c.get('change'))
                   ])
                   ])
     await inter.send_modal(modal)
@@ -162,6 +167,7 @@ async def stage_3(inter: Interaction):
 
 @client.interaction_handler('btn_modal3')
 async def send_stage_3_modal(inter: Interaction):
+    c = cache[inter.user.id]
     modal = Modal('stage_4_trigger',
                   'Relationship to Spectrum Mod Team',
                   [
@@ -169,19 +175,22 @@ async def send_stage_3_modal(inter: Interaction):
                           'why_join',
                           'Why do you want to join the mod team?',
                           placeholder='Why do you want to join the mod team?',
-                          style=TextInputType.PARAGRAPH
+                          style=TextInputType.PARAGRAPH,
+                          value=c.get('why_join')
                       )]),
                       ActionRow([TextInput(
                           'why_good_fit',
                           'Why are you a good fit?',
                           placeholder='What do you think makes you a good fit for mod?',
-                          style=TextInputType.PARAGRAPH
+                          style=TextInputType.PARAGRAPH,
+                          value=c.get('why_good_fit')
                       )]),
                       ActionRow([TextInput(
                           'experience',
                           'Moderation experience? Please list.',
                           placeholder='Do you have any experience moderating? If so, what?',
-                          style=TextInputType.PARAGRAPH
+                          style=TextInputType.PARAGRAPH,
+                          value=c.get('experience')
                       )])
                   ])
     await inter.send_modal(modal)
@@ -247,13 +256,15 @@ async def stage_5(inter: Interaction):
 
 @client.interaction_handler('btn_modal5')
 async def send_stage_5_modal(inter: Interaction):
+    c = cache[inter.user.id]
     await inter.send_modal(Modal(
         'stage_6_trigger',
         'Question about the Server',
         [ActionRow([TextInput(
             'rules_ideas',
             'Any rules that need to be changed? How?',
-            style=TextInputType.PARAGRAPH
+            style=TextInputType.PARAGRAPH,
+            value=c.get('rules_ideas')
         )])]
     ))
 
@@ -276,13 +287,15 @@ async def stage_6(inter: Interaction):
 
 @client.interaction_handler('btn_final_thoughts')
 async def send_final_thoughts(inter: Interaction):
+    c = cache[inter.user.id]
     await inter.send_modal(Modal(
         'to_final_overview',
         'Final Thoughts',
         [ActionRow([TextInput(
             'final_thoughts',
             'Anything else you might want us to know',
-            style=TextInputType.PARAGRAPH
+            style=TextInputType.PARAGRAPH,
+            value=c.get('final_thoughts')
         )])]
     ))
 
