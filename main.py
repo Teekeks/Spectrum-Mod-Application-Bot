@@ -339,7 +339,6 @@ def get_embeds(inter, header=False):
 
 @client.interaction_handler('to_final_overview')
 async def final_overview(inter: Interaction):
-    await inter.defer_message_edit()
     global cache
     await inter.message.delete()
     cache[inter.user.id]['final_thoughts'] = inter.data.components['final_thoughts']['value'] \
@@ -361,7 +360,7 @@ async def final_overview(inter: Interaction):
     for eidx in range(len(embeds)):
         _msg = await inter.user.send(embeds=[embeds[eidx]],
                                      components=comps if eidx == len(embeds) - 1 else None)
-        _msg_ids.append(_msg)
+        _msg_ids.append(_msg.id)
     cache[inter.user.id]['_msg'] = _msg_ids
 
 
@@ -379,8 +378,9 @@ async def finalize(inter: Interaction):
         await channel.send(embeds=[e],
                            content=f'New mod application by <@{inter.user.id}>' if first else None)
         first = False
+    ch = await inter.user.fetch_dm_channel()
     for _msg_id in cache[inter.user.id]['_msg']:
-        await _msg_id.delete()
+        await ch.delete_message(_msg_id)
     await inter.send_followup(embeds=[{
         'description': 'Your application was successfully send to the mod team!',
         'color': c_success
