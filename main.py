@@ -2,6 +2,7 @@ import datetime
 import logging
 import random
 
+from distee.channel import ForumChannel
 from distee.client import Client
 from distee.components import ActionRow, Button, Modal, TextInput
 from distee.enums import TextInputType, ButtonStyle, Event
@@ -13,7 +14,7 @@ import os.path
 
 from distee.message import Message
 
-with open('config.json') as conf_file:
+with open('config.json', encoding='utf-8') as conf_file:
     cfg = json.load(conf_file)
 
 logging.basicConfig(level=logging.INFO)
@@ -73,9 +74,10 @@ async def on_message(msg: Message):
         if cooldown.get(str(msg.author_id.id)) is not None and \
                 cooldown.get(str(msg.author_id.id)) > datetime.datetime.utcnow().timestamp():
             cd = cooldown.get(str(msg.author_id.id))
-            await msg.author.send(embeds=[{'description': f'You already submitted a application recently.\n'
-                                                          f'Please wait till <t:{int(cd)}> before you reapply',
-                                           'color': c_fail}])
+            author = await msg.author()
+            await author.send(embeds=[{'description': f'You already submitted a application recently.\n'
+                                                      f'Please wait till <t:{int(cd)}> before you reapply',
+                                       'color': c_fail}])
             return
         if cache.get(msg.author_id.id) is None:
             embed = {
@@ -86,11 +88,12 @@ async def on_message(msg: Message):
                                'in us deleting your application and no longer considering you for a moderator position.'
                                '\n\n**If you understand the above message, please click the button below to start**'
             }
-            await msg.author.send(embeds=[embed],
-                                  components=[ActionRow([Button(
-                                     'btn_modal1',
-                                     label='I understand, lets start!'
-                                  )])])
+            author = await msg.author()
+            await author.send(embeds=[embed],
+                              components=[ActionRow([Button(
+                                    'btn_modal1',
+                                    label='I understand, lets start!'
+                              )])])
             cache[msg.author_id.id] = {}
 
 
@@ -341,6 +344,7 @@ def get_embeds(inter, header=False):
 async def final_overview(inter: Interaction):
     global cache
     await inter.message.delete()
+    await inter.send('You answered all question!')
     cache[inter.user.id]['final_thoughts'] = inter.data.components['final_thoughts']['value'] \
         if inter.data.components is not None else None
     embeds = get_embeds(inter, header=True)
@@ -370,14 +374,20 @@ async def finalize(inter: Interaction):
     await inter.defer_send()
     embeds = get_embeds(inter)
     g = client.get_guild(cfg['sid'])
-    channel = g.get_channel(cfg['cid'])
-    first = True
+    channel: ForumChannel = g.get_channel(cfg['cid'])
     color = random.choice(colors)
-    for e in embeds:
+    tag = channel.get_tag_by_name(cfg['tag_name'])
+    e = embeds[0]
+    e['color'] = color
+    t, m = await channel.start_forum_thread(f'{inter.user.username} ({inter.user.id})',
+                                            applied_tags=[tag.id],
+                                            embeds=[e],
+                                            content=f'New mod application by <@{inter.user.id}>')
+    for e in embeds[1:]:
         e['color'] = color
-        await channel.send(embeds=[e],
-                           content=f'New mod application by <@{inter.user.id}>' if first else None)
-        first = False
+        m = await t.send(embeds=[e])
+    for reaction in cfg['reactions']:
+        await m.add_reaction(reaction)
     ch = await inter.user.fetch_dm_channel()
     for _msg_id in cache[inter.user.id]['_msg']:
         await ch.delete_message(_msg_id)
